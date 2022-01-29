@@ -1,10 +1,12 @@
+import pprint
+pp = pprint.PrettyPrinter(indent=0)
 import pandas as pd
 import extruct
 import requests
 from w3lib.html import get_base_url
 from urllib.parse import urlparse
 
-
+sites = []
 def extract_metadata(url):
     """Extract all metadata present in the page and return a dictionary of metadata lists. 
     
@@ -22,11 +24,17 @@ def extract_metadata(url):
                                base_url=base_url,
                                uniform=True,
                                syntaxes=['json-ld',
-                                         'microdata',
+                                         'microdata',                                
                                          'opengraph'])
     return metadata
-metadata_box = extract_metadata('https://market.yandex.ru/catalog--muzhskaia-sportivnaia-odezhda/22489037/list?rs=eJwlzs1SglAYxvGpXSxdeAO1bYbz8Z6PJSKghwFGUMqVmSWZxhnpiOQtdNNxbP-b__Pg31v14AxVB_zI2zh4U2vjNpstRh8_54GDKDDGqZDMqsm2zOrjJZpL7xmpSE91DPPKKskkUMqFuneGfnYyKMhWTbiWqqByf4iW42pwJwRGgiJBbOrTH6e7-PtUeclu09Z1Z1KYzPoUg35OuEha9eVq7T3JQ2MaUqBzGoReU__fElyQ3lnVmRHwJeQLpUeLffYOWZ5HV2Vj4HKwihQlp48rStpkNk1CVL7WPr8qISl2JccvN39pRkcq&onstock=0&local-offers-first=0')
-print(pd.Series(metadata_box))
+metadata= extract_metadata('https://www.notik.ru/goods/notebooks-lenovo-ideapad-3-14itl05-blue-83247.htm')
+metadata
+def uses_metadata_type(metadata, metadata_type):
+    if (metadata_type in metadata.keys()) and (len(metadata[metadata_type]) > 0):
+        return True
+    else:
+        return False
+
 def get_dictionary_by_key_value(dictionary, target_key, target_value):
     """Return a dictionary that contains a target key value pair. 
     
@@ -44,10 +52,31 @@ def get_dictionary_by_key_value(dictionary, target_key, target_value):
             for item in dictionary[key]:
                 if item[target_key] == target_value:
                     return item
-Product = get_dictionary_by_key_value(metadata_box, "@type", "Product")
 
+def key_exists(dict, key):
 
-df = pd.DataFrame(Product)
-print(df)
+    if not any(item['@type'] == key for item in dict):
+        print(False)
+        return False
+    else:
+        print (True)
+        return True                      
+Product = get_dictionary_by_key_value(metadata, "@type", "Product")
+#pp.pprint(pd.DataFrame(Product, columns=['name', 'offers'], index = ['price', 'priceCurrency', 'url']))
+#pp.pprint(pd.DataFrame(Product)) 
+# if key_exists(metadata['microdata'], 'Product'): 
+#     pp.pprint (pd.DataFrame(metadata['microdata']))
+# if key_exists(metadata['json-ld'], 'Product'):
+#     print (pd.DataFrame(metadata['json-ld']))
+# if key_exists(metadata['opengraph'], 'Product'):
+#     print(pd.DataFrame(metadata['opengraph']))
+#print(pd.DataFrame(metadata))
+#print(pd.Series(metadata['opengraph']))
+#print(pd.DataFrame(metadata['json-ld']))
+print(pd.DataFrame(metadata['microdata']))
+# print(pd.DataFrame(metadata['opengraph']))
+    
+    # print(pd.DataFrame(metadata['json-ld']['@context'].keys()))
+
         
 #
