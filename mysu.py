@@ -2,7 +2,7 @@
 import pprint
 pp = pprint.PrettyPrinter(indent=0, width=50)
 # Needs urllib3 2, https://github.com/urllib3/urllib3#installing
-import urllib3
+import urllib.request
 import extruct
 import numpy as np
 from extruct2products import extruct2products as ex
@@ -19,10 +19,13 @@ url ='https://commoncrawl.s3.amazonaws.com/crawl-data/CC-MAIN-2021-10/segments/1
 #req=requests.get(url, stream = True)
 # use urllib3 to open an URL stream
 
-#req =  requests.request(method="get",url=url) # its not working
+req =  requests.get(url, stream=True) 
+req = req.raw    # its working
+#req = urllib3.request("GET", url, preload_content=False)
+#req = urllib.request("GET", url)
 
 
-req = urllib3.request("GET", url, preload_content=False)# its working
+#req = urllib3.request("GET", url, preload_content=False)# its working
 
     
         
@@ -60,13 +63,12 @@ def key_exists(dict, key):
 count = 0
 for record in ArchiveIterator(req, record_types = WarcRecordType.response, func_filter = lambda r: r.headers.get('WARC-Identified-Payload-Type') == 'text/html', max_content_length = 512000):
     
-    #mb forgot lxml.etree
     if record.content_length>0:
         # !Записываем в словарь что считали при помощи extruct
         
         reccl = record.content_length
         metadata = exne((record.reader.read(reccl)).decode('utf-8', 'ignore'))
-        
+        print(metadata.items)
         # !Если тип метаданных json-ld or microdata извлекаем, 
         # if uses_metadata_type(metadata, 'json-ld') or uses_metadata_type(metadata, 'microdata'):
         #     # Не понимаю как отсеять нужные мне значения, работа со словарем
