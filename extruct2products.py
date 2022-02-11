@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from curses import keyname
 import extruct
 from llog import log
 import datetime
@@ -16,6 +17,7 @@ def extruct2products(html):
     exit(1)
 
   if 'microdata' in dick:
+
     for item in dick['microdata']:
       if item['@type'] != 'Product':
         continue
@@ -35,6 +37,31 @@ def extruct2products(html):
         priceCurrency = offers['priceCurrency'] if offers['priceCurrency'] else ''
         price = offers['price'] if offers['price'] else ''
         if price and priceCurrency and in_stock and new:
+          product['price'] = price
+          product['currency'] = priceCurrency
+          products.append(product)
+# copied out microdata
+  if 'json-ld' in dick:
+    for item in dick['json-ld']:
+      if item['@type'] != 'Product':
+        continue
+      if not 'name' in item:
+        continue
+      if not 'offers' in item:
+        continue
+      product = {}
+      for key in ['name', 'brand', 'description', 'gtin8', 'sku', 'image']:
+        if key in item:
+          product[key] = item[key]
+
+      if item['offers']:
+        offers = item['offers']
+        in_stock = 'availability' in offers and offers['availability'] == 'https://schema.org/InStock'
+        new = 'itemCondition' in offers and offers['itemCondition'] == 'https://schema.org/NewCondition'
+        used = 'itemCondition' in offers and offers['itemCondition'] == 'https://schema.org/UsedCondition'
+        priceCurrency = offers['priceCurrency'] if offers['priceCurrency'] else ''
+        price = offers['price'] if offers['price'] else ''
+        if price and priceCurrency and in_stock and new or used:
           product['price'] = price
           product['currency'] = priceCurrency
           products.append(product)
@@ -75,9 +102,9 @@ def extruct2products(html):
               continue
             product[kʹ] = map['@value']
 
-    if not product['name'] in [i['name'] for i in products]:
-      if 'price' in product and 'currency' in product and 'name' in product:
-        products.append(product)
+        if not product['name'] in [i['name'] for i in products]:
+          if 'price' in product and 'currency' in product and 'name' in product:
+            products.append(product)
 
   # tbd, needs an example with price
   # if 'dublincore' in dick:
@@ -91,7 +118,7 @@ def extruct2products(html):
 
 # периодически возвращаясь к файлу, под который это было написано изначально
 def test_extruct2products():
-  for [fn, price] in [['bad-schema-org.html', None], ['schema-org.html', 399]]:
+  for [fn, price] in [['jsonld.html', None], ['schema-org.html', 399]]:
     html = open(f"test-data/{fn}", 'r', encoding='utf-8', errors='ignore').read()
     start = datetime.datetime.now()
     got = extruct2products(html)
